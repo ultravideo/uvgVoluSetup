@@ -1,0 +1,74 @@
+from pathlib import Path
+import os
+import sys
+import subprocess
+
+# uvgVPCCdec (decoder) launcher for the demo pipeline.
+#
+# Receives the V-PCC bitstream from uvgVPCCenc over RTP and reconstructs
+# decoded .ply frames, forwarding them to the visualizer over ZeroMQ
+# (tcp://localhost:5555 / 5556).
+#
+# Run order of the whole pipeline:
+#   visualizer -> decoder -> encoder -> capture_system
+#
+# Usage:
+#   python3 decoder_script.py build    # (re)build uvgvpccdec
+#   python3 decoder_script.py decode   # run the decoder
+
+BIN_DIR = "@BIN_DIR@"
+REPOS_DIR = "@REPOS_DIR@"
+
+os.environ["LD_LIBRARY_PATH"] = BIN_DIR + os.pathsep + os.environ.get("LD_LIBRARY_PATH", "")
+
+uvgvpccdec_root = os.path.join(REPOS_DIR, "uvgvpccdec")
+uvgvpccdec_app_path = os.path.join(BIN_DIR, "uvgVPCCdec ") + " "
+input_file_cmd = "-i /path/to/input.vpcc "
+output_file_cmd = "-o decoded_plys/decoded_%03d_%04d.ply "
+
+# LOW LATENCY (matches encoder_script.py R5, sizeGOF=1)
+v3crpt_num_ad = 4
+v3crpt_num_ovd = 4
+v3crpt_num_gvd = 5
+v3crpt_num_avd = 5
+
+# LOW BITRATE SIZE GOF8 (uncomment to match sizeGOF=8 encoding):
+# v3crpt_num_ad = 11
+# v3crpt_num_ovd = 11
+# v3crpt_num_gvd = 19
+# v3crpt_num_avd = 19
+
+# LOW BITRATE SIZE GOF16 (uncomment to match sizeGOF=16 encoding):
+# v3crpt_num_ad = 19
+# v3crpt_num_ovd = 19
+# v3crpt_num_gvd = 35
+# v3crpt_num_avd = 35
+
+if len(sys.argv) > 1:
+    sys.argv.pop(0)
+    for arg in sys.argv:
+        if arg == "build":
+            subprocess.run(["cmake", "--build", ".", "--parallel"], cwd=uvgvpccdec_root)
+        elif arg == "decode":
+            os.system(f"rm -rf {os.path.join(os.getcwd(), 'decoded_plys')}/*")
+
+            os.system(
+                uvgvpccdec_app_path +
+                input_file_cmd + " " +
+                output_file_cmd + " " +
+                "-t 0 " +
+                "--TMC2Upscaling=false " +
+                "--fastColorConversion=true " +
+                "--in-order-output 1 " +
+                "--remote-input 1 " +
+                "--src-address=10.21.25.205 " +
+                "--src-port=8890,8891,8892,8893,8894 " +
+                "--remote-output 1 " +
+                "--position-address=tcp://localhost:5556 " +
+                "--color-address=tcp://localhost:5555 " +
+                f"--v3crpt_num_ad={v3crpt_num_ad} " +
+                f"--v3crpt_num_ovd={v3crpt_num_ovd} " +
+                f"--v3crpt_num_gvd={v3crpt_num_gvd} " +
+                f"--v3crpt_num_avd={v3crpt_num_avd} " +
+                " > /dev/null 2>&1"
+            )

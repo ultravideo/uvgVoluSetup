@@ -1,0 +1,7 @@
+build/
+repos/
+stage/
+bin/
+_b/
+*.log
+CMakeUserPresets.json

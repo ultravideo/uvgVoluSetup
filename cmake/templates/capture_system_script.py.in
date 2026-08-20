@@ -1,0 +1,58 @@
+from pathlib import Path
+import os
+import subprocess
+import sys
+
+# uvgVoluCap (capture system) launcher for the demo pipeline.
+#
+# The full pipeline cannot run on this machine (no Azure Kinect / RealSense
+# cameras), but this script can be used on the actual capture setup to drive
+# uvgVoluCap against the assembled bin/ folder.
+#
+# Run order of the whole pipeline:
+#   visualizer -> decoder -> encoder -> capture_system
+#
+# Usage:
+#   python3 capture_system_script.py build   # (re)build uvgvolucap
+#   python3 capture_system_script.py run     # launch the capture application
+
+BIN_DIR = "@BIN_DIR@"
+REPOS_DIR = "@REPOS_DIR@"
+
+os.environ["LD_LIBRARY_PATH"] = BIN_DIR + os.pathsep + os.environ.get("LD_LIBRARY_PATH", "")
+
+# ./uvgVoluCap --config calibration_cameraconfig.json
+# --addr_color tcp://localhost:5555
+# --addr_position tcp://localhost:5556
+# --running_time 600
+# --cam_type 2
+# --running_mode 0
+
+cmd = os.path.join(BIN_DIR, "uvgVoluCap ") + " "
+cmd += "--config " + os.path.join(BIN_DIR, "cameraconfig.json ") + " "
+# Use a calibrated camera config when available, e.g.:
+#   cmd = os.path.join(BIN_DIR, "uvgVoluCap ")
+#   cmd += "--config " + os.path.join(BIN_DIR, "calibration_cameraconfig.json ") + " "
+#   cmd += "--config " + os.path.join(BIN_DIR, "cameraconfig_charuco_6cam_YYYY-MM-DD_center.json ") + " "
+cmd += "--addr_color tcp://localhost:5555 "
+cmd += "--addr_position tcp://localhost:5556 "
+cmd += "--running_time 600000 "
+cmd += "--cam_type 2 "
+cmd += "--running_mode 1 "
+
+uvgvolucap_root = os.path.join(REPOS_DIR, "uvgvolucap", "build")
+
+if len(sys.argv) > 1:
+    sys.argv.pop(0)
+    for arg in sys.argv:
+        if arg == "build":
+            subprocess.run(
+                ["cmake", "--build", ".", "--config", "Release", "--parallel", "--target", "install"],
+                cwd=uvgvolucap_root,
+            )
+            os.chmod(os.path.join(BIN_DIR, "uvgVoluCap"), 0o755)
+
+        if arg == "run":
+            print(cmd)
+            os.system(cmd)
+            # os.system("gdb --args " + cmd)

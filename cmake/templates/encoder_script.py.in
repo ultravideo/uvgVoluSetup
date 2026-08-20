@@ -1,0 +1,69 @@
+from pathlib import Path
+import os
+import subprocess
+import sys
+
+# uvgVPCCenc (encoder) launcher for the demo pipeline.
+#
+# Receives color/position data from uvgVoluCap over ZeroMQ (tcp://*:5555 / 5556)
+# and streams the V-PCC bitstream to uvgVPCCdec over RTP.
+#
+# Run order of the whole pipeline:
+#   visualizer -> decoder -> encoder -> capture_system
+#
+# Usage:
+#   python3 encoder_script.py build   # (re)build uvgvpccenc
+#   python3 encoder_script.py run     # launch the encoder
+
+BIN_DIR = "@BIN_DIR@"
+REPOS_DIR = "@REPOS_DIR@"
+
+os.environ["LD_LIBRARY_PATH"] = BIN_DIR + os.pathsep + os.environ.get("LD_LIBRARY_PATH", "")
+
+# ./uvgVPCCenc
+# -i "vox9"
+# -o "/path/to/output.vpcc"
+# -t 40 -n 250
+# --remote-input 1
+# --dst-address 130.230.18.167/22
+# --dst-port 8890
+# --remote-position-address tcp://*:5556
+# --remote-color-address tcp://*:5555
+# --uvgformat='enableVoxelization=0'
+
+# Rate settings used by the capture system (R5 = low latency)
+R1 = "32-42-4"
+R2 = "28-37-4"
+R3 = "24-32-4"
+R4 = "20-27-4"
+R5 = "16-22-2"
+
+cmd = os.path.join(BIN_DIR, "uvgVPCCenc ") + " "
+cmd += " -n 250 -i _ -g 10 "
+cmd += "--uvgvpcc rate=%s,sizeGOF=1,presetName=fast,mode=AI,activateSlicing=true,doubleLayer=true,logLevel=ERROR, " % R5
+
+# Alternate settings (commented out):
+# cmd += "--uvgvpcc rate=%s,sizeGOF=8,presetName=fast,mode=RA,activateSlicing=true,doubleLayer=true,logLevel=INFO, " % R5
+# cmd += "--uvgvpcc rate=%s,presetName=slow,mode=RA,geometryEncodingPreset=slow,attributeEncodingPreset=slow,occupancyEncodingPreset=slow,activateSlicing=true,doubleLayer=true,logLevel=ERROR,sizeGOF=16,sizeGOP2DEncoding=8, " % R5
+
+cmd += "--input-fps-limiter=25 "
+cmd += "--dst-address=10.21.25.205 "
+cmd += "--dst-port=8890,8891,8892,8893,8894 "
+cmd += "--remote-input 1 "
+cmd += "--remote-position-address tcp://*:5556 "
+cmd += "--remote-color-address tcp://*:5555 "
+cmd += "--uvgformat='enableVoxelization=1,voxelMin=0.0,voxelMax=1250.0'"
+# voxelMax = 512.0, 1024.0 or 1500.0 depending on the capture volume
+
+uvgvpccenc_root = os.path.join(REPOS_DIR, "uvgvpccenc")
+
+if len(sys.argv) > 1:
+    sys.argv.pop(0)
+    for arg in sys.argv:
+        if arg == "build":
+            subprocess.run(["cmake", "--build", ".", "--parallel"], cwd=uvgvpccenc_root)
+
+        if arg == "run":
+            print(cmd)
+            os.system(cmd + " > /dev/null 2>&1")
+            # os.system(cmd)
