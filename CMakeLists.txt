@@ -14,11 +14,11 @@ find_package(Git REQUIRED)
 #
 # Empty *_TAG means "track the repository default branch".
 # ============================================================================
-set(UVGVOLUCAP_REPO "git@gitlab.tuni.fi:cs/ultravideo/pcc/uvgvolucap.git"  CACHE STRING "git URL of the uvgVoluCap capture application")
-set(UVGVPCCENC_REPO "git@gitlab.tuni.fi:cs/ultravideo/pcc/02-uvgvpccenc.git" CACHE STRING "git URL of the uvgVPCCenc V-PCC encoder")
-set(UVGVPCCDEC_REPO "git@gitlab.tuni.fi:cs/ultravideo/pcc/uvgvpccdec.git"   CACHE STRING "git URL of the uvgVPCCdec V-PCC decoder")
-set(VISUALIZER_REPO "git@gitlab.tuni.fi:cs/ultravideo/pcc/visualizer.git"   CACHE STRING "git URL of the point-cloud visualizer")
-set(UVGV3CRTP_REPO  "git@gitlab.tuni.fi:cs/ultravideo/pcc/uvgv3crtp.git"    CACHE STRING "git URL of uvgV3CRTP (RTP transport for V3C bitstreams)")
+set(UVGVOLUCAP_REPO "git@github.com:ultravideo/uvgVoluCap.git"  CACHE STRING "git URL of the uvgVoluCap capture application")
+set(UVGVPCCENC_REPO "git@github.com:ultravideo/uvgVPCCenc.git" CACHE STRING "git URL of the uvgVPCCenc V-PCC encoder")
+set(UVGVPCCDEC_REPO "git@github.com:ultravideo/uvgVPCCdec.git"   CACHE STRING "git URL of the uvgVPCCdec V-PCC decoder")
+set(VISUALIZER_REPO "git@github.com:ultravideo/uvgVoluPlay.git"   CACHE STRING "git URL of the point-cloud visualizer")
+set(UVGV3CRTP_REPO  "git@github.com:ultravideo/uvgV3CRTP.git"    CACHE STRING "git URL of uvgV3CRTP (RTP transport for V3C bitstreams)")
 
 set(UVGVOLUCAP_TAG "" CACHE STRING "Branch/tag/commit for uvgvolucap (empty = default branch)")
 set(UVGVPCCENC_TAG "" CACHE STRING "Branch/tag/commit for uvgvpccenc (empty = default branch)")
